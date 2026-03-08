@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Redirecting...</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.box{background:#1e293b;padding:30px;border-radius:12px;text-align:center}
+a{color:#22c55e}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>Redirecting...</h2>
+<p id="msg">Checking link...</p>
+<p><a href="/admin.html">Admin</a></p>
+</div>
+
+<script>
+async function go(){
+ try{
+   let res = await fetch("links.json?"+Date.now());
+   let data = await res.json();
+
+   let slug = location.pathname.split("/").pop();
+
+   if(!slug || slug === "index.html"){
+      document.getElementById("msg").innerText="Short link not provided.";
+      return;
+   }
+
+   if(data[slug]){
+      location.replace(data[slug]);
+   }else{
+      document.getElementById("msg").innerText="Link not found.";
+   }
+
+ }catch(e){
+   document.getElementById("msg").innerText="Error loading database.";
+ }
+}
+go();
+</script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Shortener Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#0f172a;color:white;text-align:center;padding:30px}
+.panel{background:#1e293b;padding:20px;border-radius:10px;max-width:600px;margin:auto}
+input{padding:10px;margin:6px;width:90%;border-radius:6px;border:none}
+button{padding:10px 16px;margin:6px;border:none;border-radius:6px;background:#22c55e;color:white;cursor:pointer}
+.link{background:#334155;margin:8px;padding:8px;border-radius:6px}
+</style>
+</head>
+<body>
+
+<div id="login" class="panel">
+<h2>Admin Login</h2>
+<input type="password" id="pass" placeholder="Password">
+<br>
+<button onclick="login()">Login</button>
+</div>
+
+<div id="dash" class="panel" style="display:none">
+<h2>URL Shortener</h2>
+
+<input id="url" placeholder="Long URL">
+
+<br>
+<button onclick="create()">Generate Random Short Link</button>
+
+<h3>Links</h3>
+<div id="list"></div>
+</div>
+
+<script>
+
+const PASSWORD="123456"
+
+const GITHUB_USERNAME="YOUR_USERNAME"
+const REPO_NAME="YOUR_REPO"
+const FILE_PATH="links.json"
+const TOKEN="PASTE_GITHUB_TOKEN"
+
+function login(){
+ if(document.getElementById("pass").value===PASSWORD){
+   document.getElementById("login").style.display="none"
+   document.getElementById("dash").style.display="block"
+   load()
+ }else{
+   alert("Wrong password")
+ }
+}
+
+function randomSlug(){
+ return Math.random().toString(36).substring(2,8)
+}
+
+async function load(){
+ let res=await fetch("links.json?"+Date.now())
+ let data=await res.json()
+
+ let html=""
+
+ for(let k in data){
+  html+=`
+  <div class="link">
+  <b>${location.origin}/${k}</b>
+  <br>
+  ${data[k]}
+  </div>
+  `
+ }
+
+ document.getElementById("list").innerHTML=html
+}
+
+async function create(){
+
+ let url=document.getElementById("url").value
+
+ if(!url){
+  alert("Enter URL")
+  return
+ }
+
+ let slug=randomSlug()
+
+ let res=await fetch("links.json?"+Date.now())
+ let data=await res.json()
+
+ data[slug]=url
+
+ await updateJSON(data)
+
+ alert("Short link created: "+location.origin+"/"+slug)
+
+ load()
+}
+
+async function updateJSON(content){
+
+ let api=`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`
+
+ let get=await fetch(api)
+ let file=await get.json()
+
+ let sha=file.sha
+
+ let encoded=btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2))))
+
+ await fetch(api,{
+ method:"PUT",
+ headers:{
+   "Authorization":"token "+TOKEN,
+   "Content-Type":"application/json"
+ },
+ body:JSON.stringify({
+   message:"update links",
+   content:encoded,
+   sha:sha
+ })
+ })
+
+}
+
+</script>
+</body>
+</html>
